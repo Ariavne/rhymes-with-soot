@@ -1,0 +1,475 @@
+/* rhymes_with_soot — Framework base stylesheet.
+   Covers only the framework's own pages (login, errors). A site extends this
+   with its own CSS via the `styles` block in base.html. */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  min-height: 100vh;
+}
+
+a {
+  color: #64b5f6;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* Buttons */
+.btn {
+  padding: 5px 12px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: #2a2a4a;
+  color: #e0e0e0;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.15s;
+}
+.btn:hover {
+  background: #3a3a5a;
+}
+.btn-primary {
+  background: #1565c0;
+  border-color: #1565c0;
+  color: #fff;
+}
+.btn-primary:hover {
+  background: #1976d2;
+}
+
+/* Forms */
+.form-group {
+  margin-bottom: 14px;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+  color: #aaa;
+}
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  font-size: 14px;
+}
+.form-group input:focus {
+  outline: none;
+  border-color: #64b5f6;
+}
+.btn:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #64b5f6;
+  outline-offset: 2px;
+}
+
+/* Login / centered pages */
+.login-container {
+  max-width: 380px;
+  margin: 80px auto;
+  padding: 30px;
+  background: #16213e;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+.login-container h1 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+.login-container p {
+  text-align: center;
+  margin-bottom: 14px;
+}
+.login-form .btn {
+  width: 100%;
+  padding: 8px;
+  font-size: 14px;
+}
+.login-error {
+  background: rgba(198, 40, 40, 0.15);
+  border: 1px solid #c62828;
+  border-radius: 4px;
+  color: #ef5350;
+  font-size: 13px;
+  padding: 10px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+/* Admin page */
+.admin-container {
+  max-width: 720px;
+  margin: 40px auto;
+  padding: 0 16px;
+}
+.admin-container h1 {
+  margin-bottom: 8px;
+  font-size: 24px;
+}
+.admin-back {
+  display: inline-block;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #8ab4f8;
+}
+.admin-back:hover {
+  color: #aecbfa;
+}
+.admin-note {
+  color: #aaa;
+  font-size: 13px;
+  margin-bottom: 18px;
+}
+.admin-notice {
+  background: rgba(46, 125, 50, 0.15);
+  border: 1px solid #2e7d32;
+  border-radius: 4px;
+  color: #81c784;
+  font-size: 13px;
+  padding: 10px;
+  margin-bottom: 16px;
+}
+.admin-form {
+  background: #16213e;
+  border-radius: 8px;
+  padding: 18px;
+  margin-bottom: 24px;
+}
+.form-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #888;
+}
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid #2a2a4a;
+}
+.admin-table th {
+  color: #aaa;
+  font-size: 13px;
+}
+.admin-actions {
+  white-space: nowrap;
+}
+.inline-form {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  margin-right: 10px;
+}
+.inline-form input {
+  width: 150px;
+  padding: 5px 8px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  font-size: 13px;
+}
+.btn-danger {
+  background: #b71c1c;
+  border-color: #b71c1c;
+  color: #fff;
+}
+.btn-danger:hover {
+  background: #d32f2f;
+}
+.hidden {
+  display: none !important;
+}
+
+/* Password dialog */
+.pw-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.pw-dialog {
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  background: #16213e;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+.pw-dialog h2 {
+  margin: 0 0 14px;
+  font-size: 18px;
+}
+.pw-checklist {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  font-size: 13px;
+}
+.pw-checklist li {
+  color: #ef9a9a;
+  padding: 2px 0 2px 18px;
+  position: relative;
+}
+.pw-checklist li::before {
+  content: "×";
+  position: absolute;
+  left: 2px;
+}
+.pw-checklist li.ok {
+  color: #81c784;
+}
+.pw-checklist li.ok::before {
+  content: "✓";
+}
+.pw-match {
+  min-height: 16px;
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: #888;
+}
+.pw-match.bad {
+  color: #ef5350;
+}
+.pw-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Settings page (rendered from the site's register_setting declarations) */
+.settings-container {
+  max-width: 480px;
+  margin: 40px auto;
+  padding: 0 16px;
+}
+.settings-container h1 {
+  margin-bottom: 18px;
+  font-size: 24px;
+}
+.settings-form {
+  background: #16213e;
+  border-radius: 8px;
+  padding: 18px;
+}
+.settings-row {
+  margin-bottom: 16px;
+}
+.settings-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #e0e0e0;
+  margin-bottom: 4px;
+}
+.settings-toggle input {
+  width: auto;
+  accent-color: #1565c0;
+}
+/* Segment control on the /settings page: a row of radio-styled buttons
+   over a setting's choices (the "segment" kind). */
+.settings-segment-page {
+  display: inline-flex;
+  border: 1px solid #444;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.settings-segment-page .segment-btn {
+  display: inline-block;
+  margin: 0;
+  padding: 7px 12px;
+  font-size: 14px;
+  color: #e0e0e0;
+  cursor: pointer;
+}
+.settings-segment-page .segment-btn + .segment-btn {
+  border-left: 1px solid #444;
+}
+.settings-segment-page .segment-btn input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.settings-segment-page .segment-btn:has(input:checked) {
+  background: #1565c0;
+  color: #fff;
+}
+
+/* Per-row save feedback: flashes "Saved" / "Save failed" after an
+   auto-save and fades out on its own. */
+.settings-saved {
+  display: inline;
+  margin-left: 8px;
+  font-size: 12px;
+  color: #81c784;
+  opacity: 0;
+}
+.settings-saved.error {
+  color: #ef5350;
+}
+.settings-saved.show {
+  animation: settings-saved-fade 1.6s ease forwards;
+}
+@keyframes settings-saved-fade {
+  0% { opacity: 0; }
+  15% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Settings dialog (js/settings_dialog.js) — a centered, auto-saving popup
+   listing the site's declared settings. Themed via --sd-* variables so a
+   site can restyle it from its own stylesheet. */
+.settings-dialog-backdrop {
+  --sd-bg: #16213e;
+  --sd-panel: #1a1a2e;
+  --sd-border: #444;
+  --sd-text: #e0e0e0;
+  --sd-dim: #888;
+  --sd-accent: #1565c0;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.settings-dialog {
+  width: min(420px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  background: var(--sd-bg);
+  border: 1px solid var(--sd-border);
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  padding: 18px;
+}
+.settings-dialog-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--sd-text);
+  margin-bottom: 12px;
+}
+.settings-dialog .settings-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.settings-dialog .settings-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  color: var(--sd-text);
+}
+.settings-dialog .settings-row input[type="text"],
+.settings-dialog .settings-row input[type="number"],
+.settings-dialog .settings-row select {
+  width: 160px;
+  padding: 7px 9px;
+  border: 1px solid var(--sd-border);
+  border-radius: 4px;
+  background: var(--sd-panel);
+  color: var(--sd-text);
+  font-size: 14px;
+  font-family: inherit;
+}
+.settings-dialog .settings-row input[type="text"]:focus,
+.settings-dialog .settings-row input[type="number"]:focus,
+.settings-dialog .settings-row select:focus {
+  outline: none;
+  border-color: var(--sd-accent);
+}
+.settings-dialog .settings-row input[type="checkbox"] {
+  width: auto;
+  accent-color: var(--sd-accent);
+}
+.settings-dialog .settings-saved {
+  margin-left: 0;
+}
+.settings-dialog .settings-hint {
+  display: block;
+  flex-basis: 100%;
+  margin: -6px 0 4px;
+}
+.settings-dialog .settings-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* Segment control: a row of single-tap buttons over a setting's choices
+   (the "segment" kind). */
+.settings-segment {
+  display: flex;
+  border: 1px solid var(--sd-border, #444);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.segment-btn {
+  border: none;
+  background: transparent;
+  color: var(--sd-text, #e0e0e0);
+  font-size: 13px;
+  font-family: inherit;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.segment-btn + .segment-btn {
+  border-left: 1px solid var(--sd-border, #444);
+}
+.segment-btn:hover {
+  background: rgba(128, 128, 128, 0.15);
+}
+.segment-btn.on {
+  background: var(--sd-accent, #1565c0);
+  color: #fff;
+}
+
+/* Error pages */
+.error-page {
+  text-align: center;
+  margin-top: 100px;
+}
+.error-page h1 {
+  font-size: 72px;
+  color: #ef5350;
+}
+.error-page p {
+  margin-top: 10px;
+}
+.error-page a {
+  display: inline-block;
+  margin-top: 20px;
+}

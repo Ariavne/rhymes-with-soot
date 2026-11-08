@@ -1,0 +1,8 @@
+flask>=3.0
+sqlalchemy>=2.0
+itsdangerous>=2.1
+werkzeug>=3.0
+cryptography>=42.0
+python-magic>=0.4
+requests>=2.31
+websocket-client>=1.8

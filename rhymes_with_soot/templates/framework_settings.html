@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Settings — {{ app_name }}{% endblock %}
+{% block content %}
+<div class="settings-container">
+    <p><a class="admin-back" href="/">← Back to site</a></p>
+    <h1>Settings</h1>
+    {% if error %}
+    <div class="login-error">{{ error }}</div>
+    {% endif %}
+    {% if notice %}
+    <div class="admin-notice">{{ notice }}</div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('settings.page') }}" class="settings-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        {% for d in defs %}
+        {% set current = values.get(d.key, d.default) %}
+        <div class="form-group settings-row" data-key="{{ d.key }}"
+             data-type="{{ d.kind }}"
+             data-default="{{ d.default if d.default is not none else '' }}">
+            {% if d.kind == "toggle" %}
+            <label class="settings-toggle" for="set-{{ d.key }}">
+                <input type="checkbox" id="set-{{ d.key }}" name="{{ d.key }}"
+                       {% if current %}checked{% endif %}>
+                <span class="settings-toggle-label">{{ d.label }}</span>
+            </label>
+            {% elif d.kind == "select" %}
+            <label for="set-{{ d.key }}">{{ d.label }}</label>
+            <select id="set-{{ d.key }}" name="{{ d.key }}">
+                {% for value, label in d.choices %}
+                <option value="{{ value }}" {% if current == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+                {% endfor %}
+            </select>
+            {% elif d.kind == "segment" %}
+            <label>{{ d.label }}</label>
+            <div class="settings-segment settings-segment-page" id="set-{{ d.key }}">
+                {% for value, label in d.choices %}
+                <label class="segment-btn">
+                    <input type="radio" name="{{ d.key }}" value="{{ value }}"
+                           {% if current == value %}checked{% endif %}>
+                    <span>{{ label }}</span>
+                </label>
+                {% endfor %}
+            </div>
+            {% elif d.kind == "image_url" %}
+            <label for="set-{{ d.key }}">{{ d.label }}</label>
+            <input type="text" id="set-{{ d.key }}" name="{{ d.key }}"
+                   value="{{ current if current is not none else '' }}"
+                   placeholder="(leave empty for none)">
+            {% elif d.kind == "url" %}
+            <label for="set-{{ d.key }}">{{ d.label }}</label>
+            <input type="text" id="set-{{ d.key }}" name="{{ d.key }}"
+                   value="{{ current if current is not none else '' }}"
+                   placeholder="(leave empty for none)">
+            {% elif d.kind == "number" %}
+            <label for="set-{{ d.key }}">{{ d.label }}</label>
+            <input type="number" id="set-{{ d.key }}" name="{{ d.key }}"
+                   value="{{ current if current is not none else '' }}">
+            {% else %}
+            <label for="set-{{ d.key }}">{{ d.label }}</label>
+            <input type="text" id="set-{{ d.key }}" name="{{ d.key }}"
+                   value="{{ current if current is not none else '' }}">
+            {% endif %}
+            {% if d.help %}
+            <span class="form-hint">{{ d.help }}</span>
+            {% endif %}
+            <span class="settings-saved" aria-live="polite"></span>
+        </div>
+        {% endfor %}
+    </form>
+    {# Sites add non-setting page content here (e.g. an import or account section). #}
+    {% block settings_extra %}{% endblock %}
+</div>
+<script>
+  // Changes save as they happen (one PUT per control); the per-row "Saved"
+  // note flashes on success or failure.
+  (function () {
+    "use strict";
+    var token = window.CSRF_TOKEN || "";
+
+    function flash(row, text, failed) {
+      var note = row.querySelector(".settings-saved");
+      if (!note) return;
+      note.textContent = text;
+      note.classList.toggle("error", !!failed);
+      note.classList.remove("show");
+      void note.offsetWidth; // restart the fade animation
+      note.classList.add("show");
+    }
+
+    function save(key, value, row) {
+      fetch("/api/settings/" + key, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": token },
+        body: JSON.stringify({ value: value }),
+      }).then(function (res) {
+        if (!res.ok) throw new Error("save failed");
+        flash(row, "Saved");
+      }).catch(function () {
+        flash(row, "Save failed", true);
+      });
+    }
+
+    document.querySelectorAll(".settings-row").forEach(function (row) {
+      var kind = row.getAttribute("data-type");
+      var def = row.getAttribute("data-default") || "";
+      // A segment row carries one radio per choice; bind each of them.
+      var inputs = kind === "segment"
+        ? row.querySelectorAll("input[type=radio]")
+        : [row.querySelector("input, select")];
+      inputs.forEach(function (input) {
+        if (!input) return;
+        input.addEventListener("change", function () {
+          if (kind === "toggle") {
+            save(input.name, input.checked, row);
+            return;
+          }
+          if (kind === "select" || kind === "segment") {
+            save(input.name, input.value, row);
+            return;
+          }
+          if (kind === "number") {
+            var raw = input.value.trim();
+            var value = raw === "" ? (def === "" ? null : Number(def)) : Number(raw);
+            if (value === null || !Number.isInteger(value)) {
+              input.value = def;
+              return;
+            }
+            save(input.name, value, row);
+            return;
+          }
+          save(input.name, input.value, row);
+        });
+      });
+    });
+  })();
+</script>
+{% endblock %}

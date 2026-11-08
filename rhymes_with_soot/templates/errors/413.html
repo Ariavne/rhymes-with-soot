@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}413 — {{ app_name }}{% endblock %}
+{% block content %}
+<div class="error-page">
+    <h1>413</h1>
+    <p>Request Too Large</p>
+    <p>{% if detail %}{{ detail }}{% else %}This request exceeds the maximum size.{% endif %}</p>
+    <p><a href="/">Go home</a></p>
+</div>
+{% endblock %}

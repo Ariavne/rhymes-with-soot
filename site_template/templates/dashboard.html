@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — {{ app_name }}{% endblock %}
+{% block content %}
+<h1>Dashboard</h1>
+<p>Logged in as <strong>{{ username }}</strong>. This page requires authentication
+(via the <code>@login_required</code> decorator).</p>
+<form method="post" action="{{ url_for('auth.logout') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <button type="submit" class="btn">Log out</button>
+</form>
+{% endblock %}

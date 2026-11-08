@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}405 — {{ app_name }}{% endblock %}
+{% block content %}
+<div class="error-page">
+    <h1>405</h1>
+    <p>Method Not Allowed</p>
+    <p>The request method is not supported by this resource.</p>
+    <p><a href="/">Go home</a></p>
+</div>
+{% endblock %}

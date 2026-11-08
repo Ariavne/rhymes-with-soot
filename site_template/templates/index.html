@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Home — {{ app_name }}{% endblock %}
+{% block content %}
+<h1>Welcome to {{ app_name }}</h1>
+<p>This is the public landing page. It requires no login.</p>
+<p><a class="btn btn-primary" href="{{ url_for('site_template.dashboard') }}">Go to the dashboard</a></p>
+{% endblock %}

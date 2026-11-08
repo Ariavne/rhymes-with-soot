@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+<div id="page">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <span id="user">{{ current_user.username if current_user else "anon" }}</span>
+</div>
+{% endblock %}

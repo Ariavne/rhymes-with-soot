@@ -1,0 +1,17 @@
+{
+  "subject_color": "a single flat teal",
+  "assets": [
+    {
+      "file": "logo.png",
+      "w": 256,
+      "h": 256,
+      "subject": "a bold geometric logomark, a solid rounded square with a smaller rounded square cut out of its center as negative space"
+    },
+    {
+      "file": "empty-state.png",
+      "w": 480,
+      "h": 360,
+      "subject": "a single large open box with a question mark cut out of its front face as negative space"
+    }
+  ]
+}

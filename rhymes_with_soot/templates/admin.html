@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Admin — {{ app_name }}{% endblock %}
+{% block content %}
+<div class="admin-container">
+    <p><a class="admin-back" href="/">← Back to site</a></p>
+    <h1>Users</h1>
+    <p class="admin-note">
+        Admins manage accounts only. No user's data is visible or
+        recoverable from this page.
+    </p>
+    {% if error %}
+    <div class="login-error">{{ error }}</div>
+    {% endif %}
+    {% if notice %}
+    <div class="admin-notice">{{ notice }}</div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('admin.create_user') }}"
+          id="create-form" class="admin-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="form-group">
+            <label for="new-username">Username</label>
+            <input type="text" id="new-username" name="username" required
+                   maxlength="64" autocomplete="off">
+        </div>
+        <div class="form-group">
+            <label for="new-role">Role</label>
+            <select id="new-role" name="role">
+                <option value="user">user</option>
+                <option value="admin">admin</option>
+            </select>
+        </div>
+        <button type="button" class="btn btn-primary" id="create-with-pw">
+            Set password & create
+        </button>
+    </form>
+
+    <table class="admin-table">
+        <tr>
+            <th>Username</th>
+            <th>Role</th>
+            <th>Created</th>
+            <th class="admin-actions-head">Actions</th>
+        </tr>
+        {% for u in users %}
+        <tr>
+            <td>{{ u.username }}</td>
+            <td>{{ u.role }}</td>
+            <td>{{ u.created_at.strftime('%Y-%m-%d') }}</td>
+            <td class="admin-actions">
+                <button type="button" class="btn reset-btn"
+                        data-username="{{ u.username }}"
+                        data-action="{{ url_for('admin.reset_password', username=u.username) }}">
+                    Reset
+                </button>
+                <form method="POST"
+                      action="{{ url_for('admin.delete_user', username=u.username) }}"
+                      class="inline-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+{# The only place a password is entered on this page. The dialog submits as a
+   plain form POST; the server re-checks the policy and the two-entry match. #}
+<div class="pw-dialog-overlay hidden" id="pw-dialog" role="dialog" aria-modal="true"
+     aria-labelledby="pw-dialog-title">
+    <div class="pw-dialog">
+        <h2 id="pw-dialog-title">Set password</h2>
+        <form method="POST" id="pw-dialog-form" action="">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="username" id="pw-username">
+            <input type="hidden" name="role" id="pw-role">
+            <div class="form-group">
+                <label for="pw-1">New password</label>
+                <input type="password" id="pw-1" name="password" required
+                       autocomplete="new-password">
+            </div>
+            <div class="form-group">
+                <label for="pw-2">Repeat new password</label>
+                <input type="password" id="pw-2" name="confirm" required
+                       autocomplete="new-password">
+            </div>
+            <ul class="pw-checklist" id="pw-checklist">
+                <li data-rule="length">At least 12 characters</li>
+                <li data-rule="upper">An uppercase letter</li>
+                <li data-rule="lower">A lowercase letter</li>
+                <li data-rule="digit">A number</li>
+                <li data-rule="symbol">A symbol</li>
+            </ul>
+            <p class="pw-match" id="pw-match" aria-live="polite"></p>
+            <div class="pw-dialog-actions">
+                <button type="button" class="btn" id="pw-cancel">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="pw-confirm"
+                        disabled>Set password</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script src="{{ static_url('js/admin.js') }}"></script>
+{% endblock %}

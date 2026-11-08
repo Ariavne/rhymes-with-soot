@@ -1,0 +1,21 @@
+{% extends "framework_base.html" %}
+{# Extends framework_base.html, NOT base.html — this file shadows the framework's
+base.html, so extending "base.html" would resolve to itself and recurse. #}
+{% block title %}{{ super() }}{% endblock %}
+
+{% block styles %}
+{# 1. Favicon: drop favicon.ico (or .svg) in this site's static/ and link it. #}
+<link rel="icon" href="{{ static_url('favicon.ico') }}">
+<link rel="stylesheet" href="{{ static_url('css/site.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="site-header">
+  {# 2. Logo: drop logo.png in this site's static/ and reference it. #}
+  <img class="site-logo" src="{{ static_url('img/logo.png') }}" alt="{{ app_name }}">
+  <span>{{ app_name }}</span>
+</div>
+<main>
+  {{ super() }}
+</main>
+{% endblock %}
