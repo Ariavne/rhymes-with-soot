@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Virtual environment
+.venv/
+
+# Environment files (committed .example templates stay tracked)
+*.env
+.env.*
+!.env.*.example
+
+# Credentials (safety net; each site also ignores its own)
+users.json
+
+# Dev server runtime state (framework-generated in each site's dev/)
+**/dev/app.db
+**/dev/app.db-wal
+**/dev/app.db-shm
+**/dev/server.log
+**/dev/server.pid
+**/dev/uploads/
+
+# Sites are local plugins; the framework is the product
+sites/*
+!sites/README.md
+
+# Scratch & planning
+/.scratch
+
+# OS
+.DS_Store

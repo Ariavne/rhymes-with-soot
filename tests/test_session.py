@@ -23,7 +23,7 @@ def _ph(h):
 
 def test_sign_verify_roundtrip(app):
     with app.app_context():
-        token = sign_session("alice", HASH, 3600)
+        token = sign_session("alice", HASH)
         payload = verify_session(token, 3600)
         assert payload["u"] == "alice"
         assert payload["ph"] == _ph(HASH)
@@ -31,7 +31,7 @@ def test_sign_verify_roundtrip(app):
 
 def test_tampered_cookie_rejected(app):
     with app.app_context():
-        token = sign_session("alice", HASH, 3600)
+        token = sign_session("alice", HASH)
         tampered = token[:-2] + ("aa" if token[-2:] != "aa" else "bb")
         # A tampered payload either fails to verify or raises; both are safe.
         try:
@@ -48,7 +48,7 @@ def test_expired_cookie_rejected(app, monkeypatch):
         now = int(time.time())
         # Sign as if 2 hours ago, so the embedded timestamp is in the past.
         monkeypatch.setattr(time, "time", lambda: now - 7200)
-        token = sign_session("alice", HASH, 3600)
+        token = sign_session("alice", HASH)
         monkeypatch.undo()
         # Verifying now: age (7200s) > max_age (3600s) -> expired.
         assert verify_session(token, 3600) is None
@@ -98,3 +98,40 @@ def test_login_required_post_401(client):
     token = extract_csrf(client.get("/t/page").get_data(as_text=True))
     resp = client.post("/t/protected", data={"csrf_token": token})
     assert resp.status_code == 401
+
+
+def test_serializer_is_per_app_not_module_global(tmp_path):
+    """Two apps with different SECRET_KEYs must not share a serializer: a
+    cookie signed under one app must be rejected by the other."""
+    from tests.conftest import ENCRYPTION_KEY, SECRET_KEY
+    from rhymes_with_soot import create_app
+    from rhymes_with_soot.config import BaseConfig
+
+    def make(key, prefix):
+        users_file = tmp_path / f"users_{prefix}.json"
+        users_file.write_text("{}\n")
+        config = type(
+            f"Cfg{prefix}",
+            (BaseConfig,),
+            {
+                "ENV_PREFIX": prefix,
+                "SECRET_KEY": key,
+                "DB_PATH": str(tmp_path / f"db_{prefix}.db"),
+                "USERS_FILE": str(users_file),
+                "APP_NAME": f"{prefix} Site",
+                "LOGIN_REDIRECT": "/",
+                "SESSION_COOKIE": f"{prefix.lower()}_session",
+                "CSRF_COOKIE": f"{prefix.lower()}_csrf",
+                "ENCRYPTION_KEY": ENCRYPTION_KEY,
+            },
+        )
+        return create_app(config)
+
+    app_a = make(SECRET_KEY, "APPA")
+    app_b = make("b" * 48, "APPB")
+
+    with app_a.app_context():
+        token = sign_session("alice", HASH)
+        assert verify_session(token, 3600) is not None
+    with app_b.app_context():
+        assert verify_session(token, 3600) is None

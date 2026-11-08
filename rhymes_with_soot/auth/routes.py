@@ -27,8 +27,11 @@ def _safe_next(default):
 
     Rejects absolute URLs and protocol-relative URLs (``//evil.example``) to
     prevent open redirects.
+
+    Read from the form body first: the login form carries ``next`` as a hidden
+    field, so on POST it is not in the query string.
     """
-    nxt = request.args.get("next", "")
+    nxt = request.form.get("next", "") or request.args.get("next", "")
     if nxt.startswith("/") and not nxt.startswith("//"):
         return nxt
     return default
@@ -60,8 +63,7 @@ def login():
 
     logger.info("Login user=%s ip=%s", username, request.remote_addr)
     resp = make_response(redirect(_safe_next(_login_redirect())))
-    cookie_value = sign_session(username, user.password_hash,
-                                current_app.config["SESSION_MAX_AGE"])
+    cookie_value = sign_session(username, user.password_hash)
     resp.set_cookie(
         current_app.config["SESSION_COOKIE"],
         cookie_value,

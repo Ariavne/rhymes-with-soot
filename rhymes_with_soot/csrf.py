@@ -12,19 +12,18 @@ logger = logging.getLogger("rhymes_with_soot")
 
 CSRF_MAX_AGE = 7 * 24 * 3600
 
-_serializer = None
-
 
 def _get_serializer():
-    global _serializer
-    if _serializer is None:
-        # Salt is namespaced by the site's ENV_PREFIX so two sites sharing a key
-        # (e.g. in dev) don't cross-validate, and session vs. CSRF tokens stay apart.
-        _serializer = URLSafeTimedSerializer(
-            current_app.config["SECRET_KEY"],
-            salt=f"{current_app.config['ENV_PREFIX']}-csrf",
-        )
-    return _serializer
+    # "csrf" namespaces the shared rws_serializers cache: other serializer
+    # kinds in this app reuse the (SECRET_KEY, ENV_PREFIX) prefix.
+    key = (current_app.config["SECRET_KEY"], current_app.config["ENV_PREFIX"],
+           "csrf")
+    ext = current_app.extensions.setdefault("rws_serializers", {})
+    if key not in ext:
+        # Salt is namespaced by ENV_PREFIX so sites sharing a key (e.g. in dev)
+        # don't cross-validate.
+        ext[key] = URLSafeTimedSerializer(key[0], salt=f"{key[1]}-csrf")
+    return ext[key]
 
 
 def _current_identity() -> str:

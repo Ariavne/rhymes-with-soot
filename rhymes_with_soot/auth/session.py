@@ -9,17 +9,15 @@ from functools import wraps
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from flask import request, current_app, g, redirect, url_for, abort
 
-_serializer = None
-
-
 def _get_serializer():
-    global _serializer
-    if _serializer is None:
-        _serializer = URLSafeTimedSerializer(
-            current_app.config["SECRET_KEY"],
-            salt=current_app.config["ENV_PREFIX"],
-        )
-    return _serializer
+    # "session" namespaces the shared rws_serializers cache: other serializer
+    # kinds in this app reuse the (SECRET_KEY, ENV_PREFIX) prefix.
+    key = (current_app.config["SECRET_KEY"], current_app.config["ENV_PREFIX"],
+           "session")
+    ext = current_app.extensions.setdefault("rws_serializers", {})
+    if key not in ext:
+        ext[key] = URLSafeTimedSerializer(key[0], salt=key[1])
+    return ext[key]
 
 
 def _hash_password(password_hash: str) -> str:
@@ -30,7 +28,7 @@ def _hash_password(password_hash: str) -> str:
     return hashlib.sha256(password_hash.encode("utf-8")).hexdigest()
 
 
-def sign_session(username: str, password_hash: str, max_age: int) -> str:
+def sign_session(username: str, password_hash: str) -> str:
     payload = {
         "u": username,
         "ph": _hash_password(password_hash),

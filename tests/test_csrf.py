@@ -55,9 +55,11 @@ def test_identity_mismatch_rejected(client):
     # Swap the session to Bob without re-issuing the CSRF cookie. The cookie
     # must be bound to Bob's stored password hash, so read it from the DB.
     bob = get_session().query(User).filter_by(username="bob").first()
+    with app.app_context():
+        bob_cookie = sign_session("bob", bob.password_hash)
     client.set_cookie(
-        client.application.config["SESSION_COOKIE"],
-        sign_session("bob", bob.password_hash, 3600),
+        app.config["SESSION_COOKIE"],
+        bob_cookie,
         domain="localhost",
     )
 
@@ -74,3 +76,57 @@ def test_anonymous_token_rejected_after_login(client):
     login(client, "alice", "pw-alice")
     resp = client.post("/t/echo", data={"csrf_token": anon_token})
     assert resp.status_code == 400
+
+
+def test_framework_injects_window_csrf_token(client):
+    """The framework's base template must set window.CSRF_TOKEN so the
+    settings dialog's PUTs carry a non-empty X-CSRF-Token without any site
+    having to inject it itself."""
+    html = client.get("/t/page").get_data(as_text=True)
+    assert 'window.CSRF_TOKEN = "' in html
+    token = extract_csrf(html)
+    assert token
+    assert f'window.CSRF_TOKEN = "{token}";' in html
+
+
+def test_csrf_serializer_is_per_app_not_module_global(tmp_path):
+    """Two apps with different SECRET_KEYs must not share a CSRF serializer:
+    a cookie signed under one app must be rejected by the other."""
+    from itsdangerous import BadSignature, SignatureExpired
+
+    from tests.conftest import ENCRYPTION_KEY, SECRET_KEY
+    from rhymes_with_soot import create_app
+    from rhymes_with_soot.config import BaseConfig
+    from rhymes_with_soot.csrf import sign_token, _get_serializer, CSRF_MAX_AGE
+
+    def make(key, prefix):
+        users_file = tmp_path / f"users_{prefix}.json"
+        users_file.write_text("{}\n")
+        config = type(
+            f"Cfg{prefix}",
+            (BaseConfig,),
+            {
+                "ENV_PREFIX": prefix,
+                "SECRET_KEY": key,
+                "DB_PATH": str(tmp_path / f"db_{prefix}.db"),
+                "USERS_FILE": str(users_file),
+                "APP_NAME": f"{prefix} Site",
+                "LOGIN_REDIRECT": "/",
+                "SESSION_COOKIE": f"{prefix.lower()}_session",
+                "CSRF_COOKIE": f"{prefix.lower()}_csrf",
+                "ENCRYPTION_KEY": ENCRYPTION_KEY,
+            },
+        )
+        return create_app(config)
+
+    app_a = make(SECRET_KEY, "APPA")
+    app_b = make("b" * 48, "APPB")
+
+    with app_a.app_context():
+        cookie = sign_token("some-token", "")
+    with app_b.app_context():
+        try:
+            payload = _get_serializer().loads(cookie, max_age=CSRF_MAX_AGE)
+        except (BadSignature, SignatureExpired):
+            payload = None
+        assert payload is None
