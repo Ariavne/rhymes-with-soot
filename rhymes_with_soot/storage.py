@@ -5,7 +5,7 @@ import os
 
 MAGIC = b"SOOT"
 VERSION = 1
-CHUNK_SIZE = 16 * 1024 * 1024  # 16 MiB plaintext per chunk
+CHUNK_SIZE = 16 * 1024 * 1024  # plaintext bytes per chunk
 _HEADER_LEN = 4 + 1 + 8 + 8 + 8
 
 _key = None
@@ -28,8 +28,7 @@ def resolve_key():
     ENCRYPTION_KEYFILE in the site config.
 
     The resolved key is cached for the process lifetime (a key rotation
-    needs a restart). Raises when the site has configured no key — there
-    is no plaintext fallback: everything the site stores is encrypted.
+    needs a restart). Raises when the site has configured no key.
     """
     global _key
     if _key is not None:
@@ -280,7 +279,7 @@ class EncryptedFileReader:
         self.close()
 
 
-_SERVE_BLOCK = 1024 * 1024  # 1 MiB streaming block for Range responses
+_SERVE_BLOCK = 1024 * 1024  # streaming block for Range responses
 
 
 def _content_disposition(name: str, attachment: bool) -> str:
@@ -402,3 +401,50 @@ def serve_stored_file(path: str, filename: str, content_type: str,
     if not as_attachment and content_type in PREVIEW_TYPES:
         return serve_encrypted(path, content_type, filename, as_attachment=False)
     return serve_encrypted(path, content_type, filename, as_attachment=True)
+
+
+class StorageQuotaExceeded(Exception):
+    """A write would push the user over their storage quota.
+
+    The message is human-readable (it is surfaced to the user as the 413's
+    reason)."""
+
+
+def storage_quota_cap(username, key="files.quota"):
+    """The user's storage cap in bytes, or None when there is no quota.
+
+    The cap is the site's number access ``key``: a user holding a value gets
+    it, one holding none gets the access's declared default. When the site
+    declares no such access there is no quota at all."""
+    from rhymes_with_soot.access import (
+        TOGGLE_VALUE, access_defs_by_key, load_accesses,
+    )
+
+    d = access_defs_by_key().get(key)
+    if d is None or d.kind != "number":
+        return None
+    values = [v for v in load_accesses(username).get(key, set())
+              if v != TOGGLE_VALUE]
+    if not values:
+        return d.default
+    try:
+        num = float(values[0])
+    except (TypeError, ValueError):
+        return d.default
+    return int(num) if num.is_integer() else num
+
+
+def check_storage_quota(username, current_bytes, added_bytes, key="files.quota"):
+    """Raise StorageQuotaExceeded when current + added exceeds the cap.
+
+    ``current_bytes`` is the user's usage so far (the site sums its own file
+    rows); a write that lands exactly on the cap is allowed."""
+    cap = storage_quota_cap(username, key)
+    if cap is not None and current_bytes + added_bytes > cap:
+        from rhymes_with_soot.util import format_size
+        raise StorageQuotaExceeded(
+            "not enough space: %s used, adding %s would pass the %s "
+            "limit — delete something first"
+            % (format_size(current_bytes), format_size(added_bytes),
+               format_size(cap))
+        )

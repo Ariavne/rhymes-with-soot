@@ -6,7 +6,8 @@
     <title>{% block title %}{{ app_name }}{% endblock %}</title>
     <link rel="stylesheet" href="{{ static_url('css/framework.css') }}">
     {% block styles %}{% endblock %}
-    <script>window.CSRF_TOKEN = "{{ csrf_token }}";</script>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <script{{ script_nonce|safe }}>window.CSRF_TOKEN = "{{ csrf_token }}";</script>
 </head>
 <body>
     {% block content %}{% endblock %}

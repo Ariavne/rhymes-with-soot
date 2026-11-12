@@ -1,5 +1,7 @@
 """BaseConfig env-var resolution and failure-mode tests."""
 import os
+import re
+
 import pytest
 
 from rhymes_with_soot.config import BaseConfig
@@ -111,3 +113,21 @@ def test_explicit_class_values_bypass_env(monkeypatch):
          "APP_NAME": "Ci"},
     )
     assert cfg.SECRET_KEY == "k"
+
+
+def test_csp_script_src_gets_per_response_nonce(client):
+    """A site CSP's script-src gets a per-response nonce, and the
+    framework's inline scripts carry it (so 'unsafe-inline' is not
+    needed). A fresh request gets a fresh nonce. The header carries the
+    nonce as a quoted string; the HTML attribute stays unquoted."""
+    client.application.config["CSP"] = (
+        "default-src 'self'; script-src 'self'; style-src 'self'"
+    )
+    resp = client.get("/t/page")
+    csp = resp.headers.get("Content-Security-Policy")
+    assert csp
+    # The CSP directive is "'nonce-<raw>'"; the HTML attribute is nonce="<raw>".
+    raw = re.search(r"script-src 'nonce-([^']+)'", csp).group(1)
+    assert 'nonce="%s"' % raw in resp.get_data(as_text=True)
+    csp2 = client.get("/t/page").headers.get("Content-Security-Policy")
+    assert re.search(r"script-src 'nonce-([^']+)'", csp2).group(1) != raw

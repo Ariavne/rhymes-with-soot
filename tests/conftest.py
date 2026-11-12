@@ -12,6 +12,7 @@ import pytest
 from flask import Blueprint, render_template, request
 
 from rhymes_with_soot import create_app
+from rhymes_with_soot.access import requires
 from rhymes_with_soot.auth.session import get_current_user, login_required
 from rhymes_with_soot.config import BaseConfig
 
@@ -72,6 +73,26 @@ def echo():
 @test_bp.route("/page")
 def page():
     return render_template("page.html")
+
+
+@test_bp.route("/gated-page")
+@login_required
+def gated_page():
+    return render_template("gated.html")
+
+
+@test_bp.route("/gated", methods=["GET", "POST"])
+@login_required
+@requires("secret")
+def gated():
+    return "gated"
+
+
+@test_bp.route("/gated-two")
+@login_required
+@requires("secret", "other")
+def gated_two():
+    return "gated-two"
 
 
 @test_bp.route("/raise")

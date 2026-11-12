@@ -1,6 +1,6 @@
 /* rhymes_with_soot — Framework base stylesheet.
    Covers only the framework's own pages (login, errors). A site extends this
-   with its own CSS via the `styles` block in base.html. */
+   with its own CSS via the `styles` block. */
 * {
   margin: 0;
   padding: 0;
@@ -23,7 +23,6 @@ a:hover {
   text-decoration: underline;
 }
 
-/* Buttons */
 .btn {
   padding: 5px 12px;
   border: 1px solid #444;
@@ -46,7 +45,6 @@ a:hover {
   background: #1976d2;
 }
 
-/* Forms */
 .form-group {
   margin-bottom: 14px;
 }
@@ -79,7 +77,6 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 
-/* Login / centered pages */
 .login-container {
   max-width: 380px;
   margin: 80px auto;
@@ -113,11 +110,13 @@ textarea:focus-visible {
   text-align: center;
 }
 
-/* Admin page */
 .admin-container {
   max-width: 720px;
   margin: 40px auto;
   padding: 0 16px;
+}
+.admin-two-pane {
+  max-width: 1040px;
 }
 .admin-container h1 {
   margin-bottom: 8px;
@@ -152,29 +151,125 @@ textarea:focus-visible {
   padding: 18px;
   margin-bottom: 24px;
 }
+.admin-form-title {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+.admin-form-help {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: #aaa;
+}
 .form-hint {
   display: block;
   margin-top: 4px;
   font-size: 12px;
   color: #888;
 }
-.admin-table {
-  width: 100%;
-  border-collapse: collapse;
+.admin-split {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+.admin-left {
+  width: 260px;
+  flex-shrink: 0;
+}
+.user-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid #2a2a4a;
+}
+.user-list li + li {
+  border-top: 1px solid #2a2a4a;
+}
+.user-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  color: #e0e0e0;
+  text-decoration: none;
   font-size: 14px;
 }
-.admin-table th,
-.admin-table td {
-  text-align: left;
-  padding: 8px 10px;
-  border-bottom: 1px solid #2a2a4a;
+.user-link:hover {
+  background: #16213e;
+  text-decoration: none;
 }
-.admin-table th {
+.user-link[aria-current="true"] {
+  background: #1565c0;
+  color: #fff;
+}
+.role-badge {
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 9px;
+  border: 1px solid #444;
   color: #aaa;
+}
+.role-badge.role-admin {
+  border-color: #1565c0;
+  color: #64b5f6;
+}
+.admin-right {
+  flex: 1;
+  min-width: 0;
+}
+.user-panel {
+  background: #16213e;
+  border-radius: 8px;
+  padding: 18px;
+}
+.user-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+/* Mobile-only: a site's stylesheet shows it, so the user panel can take
+   over the screen with a way back to the list. */
+.user-panel-back {
+  display: none;
+}
+.user-panel-head h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.user-panel-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.user-panel-meta label {
+  font-size: 13px;
+  color: #aaa;
+}
+.user-panel-meta select {
+  padding: 5px 8px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: #1a1a2e;
+  color: #e0e0e0;
   font-size: 13px;
 }
-.admin-actions {
-  white-space: nowrap;
+.admin-empty {
+  color: #aaa;
+  font-size: 14px;
+  padding: 30px 0;
+  text-align: center;
+}
+@media (max-width: 720px) {
+  .admin-split {
+    flex-direction: column;
+  }
+  .admin-left {
+    width: 100%;
+  }
 }
 .inline-form {
   display: inline-flex;
@@ -203,7 +298,6 @@ textarea:focus-visible {
   display: none !important;
 }
 
-/* Password dialog */
 .pw-dialog-overlay {
   position: fixed;
   inset: 0;
@@ -224,6 +318,11 @@ textarea:focus-visible {
 .pw-dialog h2 {
   margin: 0 0 14px;
   font-size: 18px;
+}
+.pw-summary {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: #8ab4f8;
 }
 .pw-checklist {
   list-style: none;
@@ -262,7 +361,88 @@ textarea:focus-visible {
   gap: 8px;
 }
 
-/* Settings page (rendered from the site's register_setting declarations) */
+/* Access editor: declared accesses grouped by namespace in the user panel */
+.access-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.access-group {
+  border: 1px solid #2a2a4a;
+  border-radius: 6px;
+  padding: 10px 14px 6px;
+  margin: 0;
+}
+.access-group legend {
+  font-size: 12px;
+  color: #8ab4f8;
+  padding: 0 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.access-control {
+  margin-bottom: 10px;
+  border: none;
+  padding: 0;
+}
+.access-control legend {
+  font-size: 14px;
+  color: #e0e0e0;
+  padding: 0 0 4px;
+}
+.access-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #e0e0e0;
+}
+.access-toggle input {
+  width: auto;
+  accent-color: #1565c0;
+}
+.access-select {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.access-select .access-label {
+  font-size: 14px;
+  color: #e0e0e0;
+  min-width: 120px;
+}
+.access-select select {
+  padding: 5px 8px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  font-size: 13px;
+}
+.access-number {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.access-number .access-label {
+  font-size: 14px;
+  color: #e0e0e0;
+  min-width: 120px;
+}
+.access-number input {
+  width: 140px;
+  padding: 5px 8px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  font-size: 13px;
+}
+.access-help {
+  margin-bottom: 8px;
+}
+
 .settings-container {
   max-width: 480px;
   margin: 40px auto;
@@ -344,9 +524,9 @@ textarea:focus-visible {
   100% { opacity: 0; }
 }
 
-/* Settings dialog (js/settings_dialog.js) — a centered, auto-saving popup
-   listing the site's declared settings. Themed via --sd-* variables so a
-   site can restyle it from its own stylesheet. */
+/* Settings dialog — a centered, auto-saving popup listing the site's
+   declared settings. Themed via --sd-* variables so a site can restyle
+   it from its own stylesheet. */
 .settings-dialog-backdrop {
   --sd-bg: #16213e;
   --sd-panel: #1a1a2e;
@@ -429,8 +609,7 @@ textarea:focus-visible {
   margin-top: 4px;
 }
 
-/* Segment control: a row of single-tap buttons over a setting's choices
-   (the "segment" kind). */
+/* The settings-dialog variant of the segment control. */
 .settings-segment {
   display: flex;
   border: 1px solid var(--sd-border, #444);
@@ -457,7 +636,6 @@ textarea:focus-visible {
   color: #fff;
 }
 
-/* Error pages */
 .error-page {
   text-align: center;
   margin-top: 100px;

@@ -8,9 +8,7 @@ migrations. A user's settings are invisible to every other user, including
 admins.
 
 Values are always encrypted at rest (AES-256-GCM) with the site's
-ENCRYPTION_KEY — the same key that encrypts file storage. A row written
-by an older framework version before the key became mandatory reads back
-as plaintext.
+ENCRYPTION_KEY — the same key that encrypts file storage.
 """
 import base64
 import json
@@ -96,7 +94,6 @@ def _validate_value(d, value):
     return value, None
 
 
-# Setting declarations, in registration order.
 _SETTING_DEFS = []
 
 
@@ -116,9 +113,9 @@ class SettingDef:
     - "image_url" — a URL string (a stored file's serve URL); the empty
       value means "no image". The value feeds an <img> src, so only
       same-origin paths are accepted. The picker is provided client-side:
-      a site registers a row renderer for this kind (see
-      static/js/settings_dialog.js) that lets the user upload a file or
-      choose from their library and stores the resulting URL.
+      a site registers a row renderer for this kind that lets the user
+      upload a file or choose from their library and stores the
+      resulting URL.
     - "url" — a link: a same-origin relative path or an absolute http(s)
       URL; the empty value means "no link". The value is intended for an
       <a href>, so other schemes (javascript:, data:) are refused.
@@ -158,24 +155,16 @@ def list_setting_defs():
     return list(_SETTING_DEFS)
 
 
-# Store
-
-
 def _looks_like_json(value):
-    """True when a stored string is plain JSON (a legacy row written before
-    a key was configured), not undecryptable ciphertext."""
+    """True when a stored string is plain JSON, not undecryptable ciphertext."""
     return (value[:1] in ("{", "[", '"', "-") or value[:1].isdigit()
             or value in ("true", "false", "null"))
 
 
 class EncryptedJSON(TypeDecorator):
-    """A JSON column encrypted at rest with the site's ENCRYPTION_KEY —
-    the same key that encrypts file storage.
+    """A JSON column encrypted at rest with the site's ENCRYPTION_KEY.
 
-    The value is stored as base64(nonce || ciphertext+tag), the same
-    format as storage.encrypt_secret. A row written by an older framework
-    version before the key became mandatory is returned as plaintext, so
-    pre-existing databases keep working.
+    The value is stored as base64(nonce || ciphertext+tag).
     """
 
     impl = JSON
@@ -209,10 +198,6 @@ class EncryptedJSON(TypeDecorator):
                 return json.loads(plaintext.decode("utf-8"))
             return value
         except Exception:
-            # Not decryptable ciphertext. A row written by an older
-            # framework version is still plain JSON and reads back as-is;
-            # anything else is corrupt or tampered and surfaces as None
-            # with a warning.
             if _looks_like_json(value):
                 return value
             logger.warning("user_settings value is corrupt or tampered; "
@@ -271,12 +256,8 @@ def delete_setting(username, key):
     return True
 
 
-# /settings page
-
-
 def _normalize_form_value(d, form):
-    """Read one declared setting from a submitted form into a Python value.
-    The value is then checked against the declared kind by _validate_value."""
+    """Read one declared setting from a submitted form into a Python value."""
     if d.kind == "toggle":
         # A checkbox is only present in the form when it is checked.
         return form.get(d.key) is not None

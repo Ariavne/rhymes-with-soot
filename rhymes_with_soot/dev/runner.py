@@ -6,11 +6,15 @@ Works for any site:
 - The server runs as a single detached process (``flask run --no-reload``)
   whose PID is recorded in ``sites/<name>/dev/server.pid``. Stop and restart
   read that file — deterministic, no port scanning or PID hunting.
+- The site's dev port is assigned once at ``init`` and stored in
+  ``sites/<name>/dev/server.port``; ``run``/``restart`` default to it, so
+  each site keeps its own port.
 - Server output goes to ``sites/<name>/dev/server.log``.
 
-All dev state (env, DB, uploads, users, log, pid) lives in the site's own
-``sites/<name>/dev/`` directory, so each site is a self-contained plugin.
-Relative env paths resolve against the repo root, which is the server's cwd.
+All dev state (env, DB, uploads, users, log, pid, port) lives in the site's
+own ``sites/<name>/dev/`` directory, so each site is a self-contained
+plugin. Relative env paths resolve against the repo root, which is the
+server's cwd.
 """
 import os
 import signal
@@ -65,6 +69,19 @@ def pidfile(name, root=REPO_ROOT):
     return os.path.join(_dev_dir(name, root), "server.pid")
 
 
+def portfile(name, root=REPO_ROOT):
+    return os.path.join(_dev_dir(name, root), "server.port")
+
+
+def remembered_port(name, root=REPO_ROOT):
+    """The site's dev port, or None."""
+    try:
+        with open(portfile(name, root), "r", encoding="utf-8") as f:
+            return int(f.read().strip())
+    except (OSError, ValueError):
+        return None
+
+
 def logfile(name, root=REPO_ROOT):
     return os.path.join(_dev_dir(name, root), "server.log")
 
@@ -116,10 +133,29 @@ def read_pid(name, root=REPO_ROOT):
     return pid if _alive(pid) else None
 
 
+def _is_dev_server(pid, name):
+    """True when the live process with this pid is the site's dev server.
+
+    A stale pidfile can hold a pid the OS has since assigned to an
+    unrelated process; signaling without this check would kill it. A
+    process that cannot be identified is treated as not ours — a wrong
+    kill is worse than a stale pidfile."""
+    try:
+        with open(f"/proc/{pid}/cmdline", "rb") as f:
+            cmdline = f.read().decode("utf-8", "replace")
+    except OSError:
+        return False
+    return "flask" in cmdline and f"sites.{name}" in cmdline
+
+
 def stop(name, root=REPO_ROOT, timeout=5):
     """Stop the site's dev server (if running). Returns the stopped PID or None."""
     pid = read_pid(name, root)
     if pid is None:
+        return None
+    if not _is_dev_server(pid, name):
+        # Stale pidfile: remove it without signaling the reused pid.
+        _rm_pidfile(name, root)
         return None
     try:
         os.kill(pid, signal.SIGTERM)
@@ -141,16 +177,27 @@ def _rm_pidfile(name, root=REPO_ROOT):
         pass
 
 
-def _wait_ready(host, port, log_path, timeout=STARTUP_TIMEOUT):
-    """Wait until the port accepts a TCP connection, or raise RunnerError."""
+def _wait_ready(proc, name, host, port, root, log_path,
+                timeout=STARTUP_TIMEOUT):
+    """Wait until the server accepts a connection, or raise RunnerError.
+
+    The process is watched while waiting: a failed bind (the port held by
+    another server) kills flask instantly, and the probe alone would see the
+    other server and report a false success."""
     probe_host = "127.0.0.1" if host in _WILDCARD_HOSTS else host
     deadline = time.time() + timeout
     while time.time() < deadline:
+        if proc.poll() is not None:
+            _rm_pidfile(name, root)
+            raise RunnerError(
+                f"{name} exited during startup; check {log_path}"
+            )
         try:
             with socket.create_connection((probe_host, port), timeout=1):
                 return
         except OSError:
             time.sleep(0.3)
+    _rm_pidfile(name, root)
     raise RunnerError(
         f"server did not accept connections on {probe_host}:{port} within "
         f"{timeout}s; check {log_path}"
@@ -158,10 +205,15 @@ def _wait_ready(host, port, log_path, timeout=STARTUP_TIMEOUT):
 
 
 def start(name, port=DEFAULT_PORT, host=DEFAULT_HOST, root=REPO_ROOT):
-    """Start the site's dev server detached. Returns its PID.
+    """Start the site's dev server detached. Returns (PID, resolved port).
 
-    Refuses to start a second instance while one is already running.
+    ``port=None`` uses the site's port (``server.port``, assigned at init),
+    falling back to the default; a site with no portfile gets one on its
+    first start. Refuses to start a second instance while one is running.
     """
+    port = port if port is not None else (
+        remembered_port(name, root) or DEFAULT_PORT
+    )
     existing = read_pid(name, root)
     if existing is not None:
         raise RunnerError(
@@ -181,7 +233,7 @@ def start(name, port=DEFAULT_PORT, host=DEFAULT_HOST, root=REPO_ROOT):
     os.makedirs(dev, exist_ok=True)
     log = open(logfile(name, root), "ab")
     # Both import styles must resolve: `sites.<name>` (repo root on the path)
-    # and top-level `<name>` (sites/ on the path), which site_template uses.
+    # and top-level `<name>` (sites/ on the path).
     env = dict(os.environ)
     env["PYTHONPATH"] = os.pathsep.join([root, os.path.join(root, "sites")])
     proc = subprocess.Popen(
@@ -203,11 +255,15 @@ def start(name, port=DEFAULT_PORT, host=DEFAULT_HOST, root=REPO_ROOT):
     with open(pidfile(name, root), "w", encoding="utf-8") as f:
         f.write(str(proc.pid))
 
-    _wait_ready("127.0.0.1", port, logfile(name, root))
-    return proc.pid
+    _wait_ready(proc, name, host, port, root, logfile(name, root))
+    if not os.path.exists(portfile(name, root)):
+        with open(portfile(name, root), "w", encoding="utf-8") as f:
+            f.write(str(port))
+    return proc.pid, port
 
 
 def restart(name, port=DEFAULT_PORT, host=DEFAULT_HOST, root=REPO_ROOT):
-    """Stop (if running) and start the site's dev server. Returns the new PID."""
+    """Stop (if running) and start the site's dev server. Returns
+    (PID, resolved port)."""
     stop(name, root)
     return start(name, port, host, root)

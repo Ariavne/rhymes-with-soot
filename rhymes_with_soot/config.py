@@ -5,7 +5,6 @@ import os
 
 
 class BaseConfig:
-    # Session lifetime, in seconds.
     SESSION_MAX_AGE = 7 * 24 * 3600
 
     # Content-Security-Policy header sent on every response. Set to a CSP

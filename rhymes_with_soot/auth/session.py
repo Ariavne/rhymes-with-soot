@@ -47,8 +47,8 @@ def verify_session(cookie_value: str, max_age: int):
 
 def get_current_user():
     """Load the current user from the session cookie. Returns User or None.
-    Cached on ``g`` for the request. A cookie whose password fingerprint no
-    longer matches the user's current hash is rejected (forced reset)."""
+    Cached on ``g`` for the request. A cookie whose password fingerprint
+    does not match the user's current hash is rejected (forced reset)."""
     if hasattr(g, "current_user"):
         return g.current_user
 

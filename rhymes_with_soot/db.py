@@ -10,7 +10,7 @@ logger = logging.getLogger("rhymes_with_soot")
 engine = None
 Session = None
 
-# Migration steps, in registration order. A step is a callable taking the engine.
+# Migration steps: callables taking the engine.
 _migration_steps = []
 
 
@@ -76,15 +76,15 @@ def run_migrations(engine):
 
 def has_table(engine, table):
     """True when the table exists; migration steps use this to guard
-    against running on a database that predates the table entirely."""
+    against a database where the table was never created."""
     from sqlalchemy import inspect
 
     return inspect(engine).has_table(table)
 
 
 def _ensure_user_role_column(engine):
-    """Older databases predate users.role; create_all never alters existing
-    tables, so add the column once. Existing users default to 'user'."""
+    """create_all never alters existing tables, so add the column once.
+    Existing users default to 'user'."""
     from sqlalchemy import inspect, text
 
     if not has_table(engine, "users"):

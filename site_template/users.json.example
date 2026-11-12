@@ -1,3 +1,7 @@
 {
-  "admin": "Change-Me"
+  "alice": {
+    "password": "Change-Me",
+    "role": "admin",
+    "access": {"area.feature": true}
+  }
 }

@@ -202,23 +202,124 @@ def test_reset_password_404s_for_unknown_user(app):
 def test_delete_user(app):
     client = _admin_client(app)
     make_user(app, "gina", "Old-Passw0rd!x")
-    resp = _post(client, "/admin/users/gina/delete", {})
+    resp = _post(client, "/admin/users/gina/delete", {"confirm": "gina"})
     assert resp.status_code == 200
     assert "gina" not in _users(app)
     c2 = app.test_client()
     assert login(c2, "gina", "Old-Passw0rd!x").status_code == 401
 
 
+def test_delete_requires_typed_confirm(app):
+    client = _admin_client(app)
+    make_user(app, "gina", "Old-Passw0rd!x")
+    resp = _post(client, "/admin/users/gina/delete", {})
+    assert resp.status_code == 200
+    assert "gina" in _users(app)  # not deleted
+    resp = _post(client, "/admin/users/gina/delete", {"confirm": "someone"})
+    assert "gina" in _users(app)
+
+
+def test_delete_runs_purge_hooks(app):
+    from rhymes_with_soot.admin import user_purge
+
+    purged = []
+    hook = lambda username: purged.append(username)  # noqa: E731
+    user_purge.append(hook)
+    try:
+        client = _admin_client(app)
+        make_user(app, "gina", "Old-Passw0rd!x")
+        resp = _post(client, "/admin/users/gina/delete", {"confirm": "gina"})
+        assert resp.status_code == 200
+        assert "gina" not in _users(app)
+        assert purged == ["gina"]
+    finally:
+        user_purge.remove(hook)
+
+
+def test_delete_aborts_when_purge_raises(app):
+    from rhymes_with_soot.admin import user_purge
+
+    def hook(username):
+        raise RuntimeError("disk on fire")
+
+    user_purge.append(hook)
+    try:
+        client = _admin_client(app)
+        make_user(app, "gina", "Old-Passw0rd!x")
+        resp = _post(client, "/admin/users/gina/delete", {"confirm": "gina"})
+        assert resp.status_code == 200
+        assert "gina" in _users(app)  # the account survives
+    finally:
+        user_purge.remove(hook)
+
+
+def test_purge_user_data(app):
+    from rhymes_with_soot.admin import user_purge
+
+    purged = []
+    hook = lambda username: purged.append(username)  # noqa: E731
+    user_purge.append(hook)
+    try:
+        client = _admin_client(app)
+        make_user(app, "gina", "Old-Passw0rd!x")
+        resp = _post(client, "/admin/users/gina/purge", {"confirm": "gina"})
+        assert resp.status_code == 200
+        assert "gina" in _users(app)  # the account stays
+        assert purged == ["gina"]
+    finally:
+        user_purge.remove(hook)
+
+
+def test_purge_requires_typed_confirm(app):
+    from rhymes_with_soot.admin import user_purge
+
+    purged = []
+    hook = lambda username: purged.append(username)  # noqa: E731
+    user_purge.append(hook)
+    try:
+        client = _admin_client(app)
+        make_user(app, "gina", "Old-Passw0rd!x")
+        resp = _post(client, "/admin/users/gina/purge", {})
+        assert resp.status_code == 200
+        assert purged == []
+    finally:
+        user_purge.remove(hook)
+
+
+def test_purge_without_hooks_is_an_error(app):
+    client = _admin_client(app)
+    make_user(app, "gina", "Old-Passw0rd!x")
+    resp = _post(client, "/admin/users/gina/purge", {"confirm": "gina"})
+    assert resp.status_code == 200
+    assert "no user data to purge" in resp.get_data(as_text=True)
+
+
+def test_purge_button_only_when_hooks_registered(app):
+    from rhymes_with_soot.admin import user_purge
+
+    client = _admin_client(app)
+    make_user(app, "gina", "Old-Passw0rd!x")
+    assert "data-purge-btn" not in client.get(
+        "/admin?user=gina").get_data(as_text=True)
+    hook = lambda username: None  # noqa: E731
+    user_purge.append(hook)
+    try:
+        assert "data-purge-btn" in client.get(
+            "/admin?user=gina").get_data(as_text=True)
+    finally:
+        user_purge.remove(hook)
+
+
 def test_delete_own_account_rejected(app):
     client = _admin_client(app, username="root")
-    resp = _post(client, "/admin/users/root/delete", {})
+    resp = _post(client, "/admin/users/root/delete", {"confirm": "root"})
     assert resp.status_code == 200
     assert "root" in _users(app)
 
 
 def test_delete_404s_for_unknown_user(app):
     client = _admin_client(app)
-    resp = _post(client, "/admin/users/ghost/delete", {})
+    resp = _post(client, "/admin/users/ghost/delete", {"confirm": "ghost"})
     assert resp.status_code == 404
 
 

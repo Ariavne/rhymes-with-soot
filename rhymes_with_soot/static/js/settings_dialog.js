@@ -2,9 +2,8 @@
  *
  * A centered dialog listing the settings a site declares with
  * register_setting; every control saves itself on change (one PUT per
- * control, /api/settings/<key>) and flashes the per-row "Saved" note
- * (framework.css) on success or failure. Dismissed by Escape or a
- * backdrop click.
+ * control, /api/settings/<key>) and flashes the per-row "Saved" note on
+ * success or failure. Dismissed by Escape or a backdrop click.
  *
  * Load it as an ES module and call openSettingsDialog(options):
  *
@@ -26,23 +25,24 @@
 
 const DEFS_URL = "/api/settings/defs";
 
-// kind -> render(def, value, ctx) -> control element.
 const rowRenderers = new Map();
 
 export function registerRowRenderer(kind, render) {
   rowRenderers.set(kind, render);
 }
 
-let overlayEl = null;   // the open backdrop element, or null
-let keyHandler = null;  // its Escape handler, or null
-let onSaved = null;     // the open dialog's (key, value) callback
+let overlayEl = null;
+let keyHandler = null;
+let onSaved = null;
 
 export function isSettingsDialogOpen() {
   return overlayEl !== null;
 }
 
 function csrfToken() {
-  return window.CSRF_TOKEN || "";
+  return window.CSRF_TOKEN
+    || (document.querySelector('meta[name="csrf-token"]') || {}).content
+    || "";
 }
 
 function putSetting(key, value) {
@@ -84,8 +84,6 @@ function save(key, value, row) {
   });
 }
 
-// Built-in row renderers
-
 function makeControl(def, value, ctx) {
   const custom = rowRenderers.get(def.kind);
   if (custom) return custom(def, value, ctx);
@@ -118,7 +116,6 @@ function makeControl(def, value, ctx) {
   }
 
   if (def.kind === "segment") {
-    // A row of single-tap buttons over the choices (radio semantics).
     const group = document.createElement("div");
     group.className = "settings-segment";
     group.id = "set-" + def.key;
@@ -166,7 +163,6 @@ function makeControl(def, value, ctx) {
     return input;
   }
 
-  // "text" and any kind without a registered renderer: a plain text input.
   const input = document.createElement("input");
   input.type = "text";
   input.id = "set-" + def.key;
@@ -211,8 +207,6 @@ function makeRow(def, value) {
   }
   return row;
 }
-
-// Open / close
 
 export function openSettingsDialog(options) {
   if (overlayEl) return;

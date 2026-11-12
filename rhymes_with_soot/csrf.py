@@ -66,7 +66,7 @@ def verify_csrf():
     cookie, and that the cookie is bound to the current session user."""
     token = request.headers.get("X-CSRF-Token") or request.form.get("csrf_token")
     if request.is_json:
-        token = token or (request.json or {}).get("csrf_token")
+        token = token or (request.get_json(silent=True) or {}).get("csrf_token")
     if not token:
         logger.warning("CSRF rejected (no token) %s %s ip=%s", request.method, request.path, request.remote_addr)
         abort(400)

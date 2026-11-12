@@ -7,8 +7,8 @@ MIN_LENGTH = 12
 # Usernames that can never be created, checked case-insensitively.
 # Reserving "admin" means a users.json that ships the template example
 # verbatim can never provision a known-credential account. The dot-only
-# names are reserved because they break URL routing (the admin page builds
-# /admin/users/<username>/... paths, and a browser normalizes them away).
+# names are reserved because they break URL routing — a browser
+# normalizes them away from the path.
 RESERVED_USERNAMES = frozenset({"admin", "administrator", ".", ".."})
 
 

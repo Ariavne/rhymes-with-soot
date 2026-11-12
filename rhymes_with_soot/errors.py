@@ -48,9 +48,15 @@ def register_error_handlers(app):
 
     @app.errorhandler(413)
     def file_too_large(e):
+        custom = e.description != e.__class__.description
         if _wants_json():
-            return jsonify({"error": "File too large"}), 413
-        return render_template("errors/413.html"), 413
+            return jsonify(
+                {"error": e.description if custom else "File too large"}
+            ), 413
+        return render_template(
+            "errors/413.html",
+            detail=e.description if custom else None,
+        ), 413
 
     @app.errorhandler(416)
     def range_not_satisfiable(e):

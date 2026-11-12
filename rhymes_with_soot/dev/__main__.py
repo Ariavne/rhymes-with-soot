@@ -3,7 +3,8 @@
 Commands:
 
     init <site>                 Scaffold sites/<site>/ + generate dev env + dev user
-    run <site> [--port N]       Start the dev server (default port 5000)
+    run <site> [--port N]       Start the dev server (default: the site's
+                                port, from sites/<site>/dev/server.port)
     start <site> [--port N]     Alias for run
     restart <site> [--port N]   Stop (if running) and start the dev server
     stop <site>                 Stop the dev server
@@ -17,7 +18,7 @@ import argparse
 import sys
 
 from rhymes_with_soot.dev.runner import (
-    DEFAULT_HOST, DEFAULT_PORT, RunnerError, lan_ip, read_pid, restart,
+    DEFAULT_HOST, RunnerError, lan_ip, read_pid, remembered_port, restart,
     start, status_url, stop,
 )
 from rhymes_with_soot.dev.scaffold import ScaffoldError, init_site
@@ -43,7 +44,9 @@ def main(argv=None):
     for cmd in ("run", "start", "restart"):
         p = sub.add_parser(cmd, help=f"{cmd} the site's dev server")
         p.add_argument("site")
-        p.add_argument("--port", type=int, default=DEFAULT_PORT)
+        p.add_argument("--port", type=int, default=None,
+                       help="listen port (default: the site's port, "
+                            "sites/<site>/dev/server.port)")
         p.add_argument("--host", default=DEFAULT_HOST,
                        help="listen address (default 0.0.0.0, all "
                             "interfaces); use 127.0.0.1 to keep it local")
@@ -79,6 +82,7 @@ def _cmd_init(name):
         print(f"Dev environment for existing site {name}/")
     print(f"  dev env:   {details['env_file']}")
     print(f"  dev state: {details['dev_dir']}/")
+    print(f"  dev port:  {details['port']}")
     print(f"  dev user:  {details['username']} / {details['password']}")
     print()
     print(f"Start it with:  python -m rhymes_with_soot.dev run {name}")
@@ -93,13 +97,13 @@ def _lan_notice(port, host):
 
 
 def _cmd_run(name, port, host):
-    pid = start(name, port, host)
+    pid, port = start(name, port, host)
     print(f"{name} running (pid {pid}) at {status_url(port, host)}")
     _lan_notice(port, host)
 
 
 def _cmd_restart(name, port, host):
-    pid = restart(name, port, host)
+    pid, port = restart(name, port, host)
     print(f"{name} restarted (pid {pid}) at {status_url(port, host)}")
     _lan_notice(port, host)
 
@@ -117,7 +121,8 @@ def _cmd_status(name):
     if pid is None:
         print(f"{name}: stopped")
     else:
-        print(f"{name}: running (pid {pid})")
+        port = remembered_port(name) or "?"
+        print(f"{name}: running (pid {pid}) on port {port}")
 
 
 if __name__ == "__main__":

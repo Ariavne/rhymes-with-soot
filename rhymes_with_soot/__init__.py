@@ -6,6 +6,7 @@ import hashlib
 import inspect
 import logging
 import os
+import re
 
 from flask import Flask, request, g, url_for, abort, send_from_directory
 from jinja2 import ChoiceLoader, FileSystemLoader
@@ -92,10 +93,30 @@ def create_app(config_class, blueprints=None):
             )
         return response
 
+    @app.before_request
+    def _csp_nonce():
+        # A per-response nonce for the site's inline scripts: the CSP
+        # header's script-src carries it and the templates stamp it on every
+        # inline <script> (via the script_nonce context var).
+        g.csp_nonce = os.urandom(16).hex()
+
     @app.after_request
     def _csp(response):
         csp = app.config.get("CSP")
         if csp:
+            nonce = getattr(g, "csp_nonce", None)
+            if nonce:
+                # Insert the nonce as an extra script-src source. The site's
+                # config decides whether 'unsafe-inline' stays; the nonce is
+                # additive, so a site that has not adopted it keeps working.
+                # The header value is a quoted string: the spec allows it, and
+                # Chromium's CSP parser rejects an unquoted nonce- source.
+                csp = re.sub(
+                    r"(script-src)(?=[ ;])",
+                    r"\1 'nonce-%s'" % nonce,
+                    csp,
+                    count=1,
+                )
             response.headers["Content-Security-Policy"] = csp
         return response
 
@@ -146,11 +167,18 @@ def create_app(config_class, blueprints=None):
 
     @app.context_processor
     def _inject():
+        from rhymes_with_soot.access import user_has, user_values
         from rhymes_with_soot.auth.session import get_current_user
+        nonce = getattr(g, "csp_nonce", None)
         return {
             "csrf_token": get_csrf_token(),
+            # Renders as ' nonce="..."' on inline <script> tags, or nothing
+            # outside a request (where no nonce was generated).
+            "script_nonce": ' nonce="%s"' % nonce if nonce else "",
             "static_url": static_url,
             "current_user": get_current_user(),
+            "user_has": lambda key: user_has(get_current_user(), key),
+            "user_values": lambda key: user_values(get_current_user(), key),
             "app_name": app.config["APP_NAME"],
         }
 

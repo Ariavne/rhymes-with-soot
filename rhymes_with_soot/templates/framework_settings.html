@@ -73,7 +73,7 @@
     {# Sites add non-setting page content here (e.g. an import or account section). #}
     {% block settings_extra %}{% endblock %}
 </div>
-<script>
+<script{{ script_nonce|safe }}>
   // Changes save as they happen (one PUT per control); the per-row "Saved"
   // note flashes on success or failure.
   (function () {

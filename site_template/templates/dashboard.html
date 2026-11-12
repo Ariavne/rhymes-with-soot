@@ -4,6 +4,15 @@
 <h1>Dashboard</h1>
 <p>Logged in as <strong>{{ username }}</strong>. This page requires authentication
 (via the <code>@login_required</code> decorator).</p>
+{% if user_has("area.feature") %}
+<section id="feature">
+  <h2>Feature</h2>
+  <p>This section renders only for users granted the
+  <code>area.feature</code> access. Its route
+  (<code>POST /api/feature</code>) returns 403 to everyone else — hiding
+  the UI does not gate the route.</p>
+</section>
+{% endif %}
 <form method="post" action="{{ url_for('auth.logout') }}">
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
   <button type="submit" class="btn">Log out</button>
