@@ -5,4 +5,3 @@ werkzeug>=3.0
 cryptography>=42.0
 python-magic>=0.4
 requests>=2.31
-websocket-client>=1.8

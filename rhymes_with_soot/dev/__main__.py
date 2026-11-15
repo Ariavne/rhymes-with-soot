@@ -31,8 +31,7 @@ def main(argv=None):
             "Development harness for rhymes_with_soot sites.\n\n"
             "Browser verification: drive the dev server with the Python "
             "`playwright` package from the project .venv, launching the "
-            "SYSTEM Firefox (p.firefox.launch(headless=True)) — not the MCP "
-            "playwright tools, which hard-launch Chrome (not installed here). "
+            "SYSTEM Firefox (p.firefox.launch(headless=True)). "
             "Run scripts with `.venv/bin/python`."
         ),
     )

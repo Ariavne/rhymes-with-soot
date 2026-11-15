@@ -7,10 +7,9 @@ Each entry is an object: {"username": {"password": "...", "role":
 The access value is granted to users that this run creates; entries for
 existing users are skipped, including their access.
 
-The access field is a mapping: {"k1": true, "model": ["m1"],
-"multi": ["a", "b"], "files.quota": 1073741824} — a boolean is a toggle
-grant, a list of values is a valued grant (select/multi), a number is a
-number grant.
+The access field is a mapping: {"k1": true, "multi": ["a", "b"],
+"files.quota": 1073741824} — a boolean is a toggle grant, a list of
+values is a valued grant (select/multi), a number is a number grant.
 
 Provisioning is all-or-nothing and fails loudly: every entry is validated
 before anything is written. A reserved username, a policy-non-compliant

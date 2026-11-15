@@ -37,8 +37,7 @@ pages, and logging.
 - Python 3.10+
 - Dependencies (see [`requirements.txt`](requirements.txt)):
   `flask`, `sqlalchemy` (2.x), `itsdangerous`, `werkzeug`, `cryptography`,
-  `python-magic` (requires the system `libmagic` library), `requests`,
-  `websocket-client`
+  `python-magic` (requires the system `libmagic` library), `requests`
 
 ## Project layout
 

@@ -196,8 +196,8 @@
     });
   }
 
-  // Deleting a user and purging their files are irreversible; the purge
-  // asks twice because file deletion is harder to reverse than the account.
+  // Deleting a user and purging their data are irreversible; the purge
+  // asks twice because data deletion is harder to reverse than the account.
 
   function askTypedConfirm(title, body, username) {
     return new Promise(function (resolve) {
@@ -279,15 +279,14 @@
     purgeBtn.addEventListener("click", function () {
       var username = purgeBtn.getAttribute("data-username");
       askTypedConfirm(
-        "Delete all of " + username + "'s files?",
-        "Every file the user has stored (uploads, model-created files, " +
-        "and files inside their chats) will be permanently deleted. " +
-        "The account itself stays.",
+        "Delete all of " + username + "'s data?",
+        "Everything the user has stored on this site will be " +
+        "permanently deleted. The account itself stays.",
         username
       ).then(function (first) {
         if (first !== username) return;
         askTypedConfirm(
-          "Really delete all of " + username + "'s files?",
+          "Really delete all of " + username + "'s data?",
           "This is the final confirmation: nothing can be recovered " +
           "afterwards.",
           username
