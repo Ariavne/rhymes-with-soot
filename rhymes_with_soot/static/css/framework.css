@@ -140,6 +140,27 @@ textarea:focus-visible {
   background: #3a3a5a;
   text-decoration: none;
 }
+.admin-panel-link.active {
+  background: #1565c0;
+  border-color: #1565c0;
+  color: #fff;
+}
+/* Landing layout: the panels are the page, so they read as cards. */
+.admin-panels-landing {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+.admin-panels-landing .admin-panel-link {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 15px;
+}
+.new-user-btn {
+  display: block;
+  width: 100%;
+  margin-bottom: 14px;
+}
 .admin-back {
   display: inline-block;
   margin-bottom: 12px;

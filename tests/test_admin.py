@@ -55,9 +55,13 @@ def test_admin_page_renders_for_admin(app):
     resp = client.get("/admin")
     assert resp.status_code == 200
     body = resp.get_data(as_text=True)
-    assert "root" in body
-    assert "Set password & create" in body
-    assert "pw-dialog" in body
+    assert "Users" in body
+    assert "root" not in body
+
+    users_body = client.get("/admin/users").get_data(as_text=True)
+    assert "root" in users_body
+    assert "New user" in users_body
+    assert "pw-dialog" in users_body
 
 
 def test_admin_post_requires_csrf(app):
@@ -300,12 +304,12 @@ def test_purge_button_only_when_hooks_registered(app):
     client = _admin_client(app)
     make_user(app, "gina", "Old-Passw0rd!x")
     assert "data-purge-btn" not in client.get(
-        "/admin?user=gina").get_data(as_text=True)
+        "/admin/users?user=gina").get_data(as_text=True)
     hook = lambda username: None  # noqa: E731
     user_purge.append(hook)
     try:
         assert "data-purge-btn" in client.get(
-            "/admin?user=gina").get_data(as_text=True)
+            "/admin/users?user=gina").get_data(as_text=True)
     finally:
         user_purge.remove(hook)
 

@@ -489,13 +489,13 @@ def test_admin_page_renders_two_pane_with_access_groups(app):
     _grant(app, "alice", "model", "m1")
 
     # No user selected: the left pane lists users, the right pane is empty.
-    body = client.get("/admin").get_data(as_text=True)
+    body = client.get("/admin/users").get_data(as_text=True)
     assert "alice" in body
     assert "Select a user to manage their account and accesses." in body
     assert "access-sections" not in body
 
     # Selecting a user renders the panel with grouped, kind-shaped controls.
-    body = client.get("/admin?user=alice").get_data(as_text=True)
+    body = client.get("/admin/users?user=alice").get_data(as_text=True)
     assert 'data-key="secret"' in body
     assert 'data-key="model" data-kind="select"' in body
     assert 'data-key="area.tools" data-kind="multi"' in body
@@ -508,7 +508,7 @@ def test_admin_page_renders_two_pane_with_access_groups(app):
 
 def test_admin_page_unknown_user_select_is_ignored(app):
     client = _admin_client(app)
-    body = client.get("/admin?user=ghost").get_data(as_text=True)
+    body = client.get("/admin/users?user=ghost").get_data(as_text=True)
     assert "Select a user to manage their account and accesses." in body
 
 

@@ -64,14 +64,25 @@ def _access_groups():
     return groups
 
 
+def _panels():
+    from rhymes_with_soot.admin import list_admin_panels
+
+    panels = [("Users", url_for("admin.users_page"))]
+    panels.extend((p.label, url_for(p.endpoint))
+                  for p in list_admin_panels())
+    return panels
+
+
+def _landing():
+    return render_template("admin.html", panels=_panels(),
+                           current=None)
+
+
 def _page(error=None, notice=None):
     from rhymes_with_soot.access import list_access_defs
-    from rhymes_with_soot.admin import list_admin_panels, user_purge
+    from rhymes_with_soot.admin import user_purge
 
     users = _user_list()
-    panels = [
-        (p.label, url_for(p.endpoint)) for p in list_admin_panels()
-    ]
     # The user panel is driven by ?user= (links) or the user= form field the
     # panel's own actions carry; an unknown or missing value leaves the right
     # pane empty.
@@ -85,7 +96,8 @@ def _page(error=None, notice=None):
         else:
             selected = None
 
-    return render_template("admin.html", users=users, panels=panels,
+    return render_template("admin_users.html", users=users, panels=_panels(),
+                           current="Users",
                            access_defs=list_access_defs(),
                            access_groups=_access_groups(),
                            access_grants=_access_grants(),
@@ -209,6 +221,12 @@ def _apply_access(session, username, current, desired):
 @admin_bp.route("/admin", methods=["GET"])
 @admin_required
 def index():
+    return _landing()
+
+
+@admin_bp.route("/admin/users", methods=["GET"])
+@admin_required
+def users_page():
     return _page()
 
 

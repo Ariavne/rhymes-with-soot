@@ -1,4 +1,6 @@
 """Admin panel hook tests: a site's registered panels render as links on /admin."""
+import re
+
 import pytest
 
 from rhymes_with_soot.admin import list_admin_panels, register_admin_panel
@@ -44,9 +46,13 @@ def test_panel_link_renders_on_admin(app, clean_panels):
     assert "Reports" in body
 
 
-def test_admin_page_without_panels_has_no_nav(app, clean_panels):
+def test_admin_page_without_panels_lists_only_users(app, clean_panels):
+    # User management is a framework panel, so the nav is always present;
+    # with no site panels registered it lists only Users.
     make_user(app, "root", GOOD_PW, role="admin")
     client = app.test_client()
     login(client, "root", GOOD_PW)
     body = client.get("/admin").get_data(as_text=True)
-    assert "admin-panels" not in body
+    links = re.findall(r'class="admin-panel-link"', body)
+    assert len(links) == 1
+    assert 'href="/admin/users">Users</a>' in body

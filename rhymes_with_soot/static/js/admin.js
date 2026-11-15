@@ -24,8 +24,11 @@
   var matchLine = document.getElementById("pw-match");
   var confirmBtn = document.getElementById("pw-confirm");
   var cancelBtn = document.getElementById("pw-cancel");
-  var createForm = document.getElementById("create-form");
-  var createBtn = document.getElementById("create-with-pw");
+  var createFields = document.getElementById("pw-create-fields");
+  var usernameInput = document.getElementById("pw-username-input");
+  var roleGroup = document.getElementById("pw-role-group");
+  var roleInput = document.getElementById("pw-role-input");
+  var newUserBtn = document.getElementById("new-user-btn");
 
   var RULES = {
     length: function (v) { return v.length >= 12; },
@@ -39,34 +42,40 @@
 
   function open(mode, target, username) {
     form.action = target;
-    usernameField.value = username || "";
     userField.value = mode === "reset" ? username : "";
-    roleField.value = "user";
     pw1.value = "";
     pw2.value = "";
     if (mode === "create") {
-      var name = document.getElementById("new-username").value;
-      var role = document.getElementById("new-role").value;
       title.textContent = "Create user";
-      usernameField.value = name;
-      roleField.value = role;
+      usernameInput.value = "";
+      roleInput.value = "user";
+      usernameField.value = "";
+      roleField.value = "user";
       confirmBtn.textContent = "Create user";
-      summary.textContent = "Creating \u201c" + name + "\u201d as " + role + ".";
+      summary.textContent = "Choose a username and role, then set the " +
+        "initial password.";
       summary.classList.remove("hidden");
+      createFields.classList.remove("hidden");
+      roleGroup.classList.remove("hidden");
     } else {
       title.textContent = "Reset password for " + username;
+      usernameField.value = username;
+      roleField.value = "user";
       confirmBtn.textContent = "Reset password";
       summary.classList.add("hidden");
+      createFields.classList.add("hidden");
+      roleGroup.classList.add("hidden");
     }
     overlay.classList.remove("hidden");
     update();
-    pw1.focus();
+    (mode === "create" ? usernameInput : pw1).focus();
   }
 
   function close() {
     // Wipe the entries so a password never lingers in the DOM.
     pw1.value = "";
     pw2.value = "";
+    usernameInput.value = "";
     overlay.classList.add("hidden");
     if (trigger) trigger.focus();
   }
@@ -95,15 +104,22 @@
     confirmBtn.disabled = !(pw2.value !== "" && v === pw2.value && allPass);
   }
 
-  createBtn.addEventListener("click", function () {
-    trigger = createBtn;
-    open("create", createForm.action, null);
+  form.addEventListener("submit", function (e) {
+    // The username and role visible in create mode must post as the form's
+    // username/role fields; the hidden fields carry the values.
+    if (usernameInput.value !== "" &&
+        !createFields.classList.contains("hidden")) {
+      usernameField.value = usernameInput.value.trim();
+      roleField.value = roleInput.value;
+    }
   });
-  createForm.addEventListener("submit", function (e) {
-    e.preventDefault();
-    trigger = createBtn;
-    open("create", createForm.action, null);
-  });
+
+  if (newUserBtn) {
+    newUserBtn.addEventListener("click", function () {
+      trigger = newUserBtn;
+      open("create", newUserBtn.getAttribute("data-action"), null);
+    });
+  }
 
   var resetBtn = document.querySelector(".reset-btn");
   if (resetBtn) {
