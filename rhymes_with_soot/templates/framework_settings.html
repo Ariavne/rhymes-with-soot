@@ -13,61 +13,66 @@
 
     <form method="POST" action="{{ url_for('settings.page') }}" class="settings-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-        {% for d in defs %}
-        {% set current = values.get(d.key, d.default) %}
-        <div class="form-group settings-row" data-key="{{ d.key }}"
-             data-type="{{ d.kind }}"
-             data-default="{{ d.default if d.default is not none else '' }}">
-            {% if d.kind == "toggle" %}
-            <label class="settings-toggle" for="set-{{ d.key }}">
-                <input type="checkbox" id="set-{{ d.key }}" name="{{ d.key }}"
-                       {% if current %}checked{% endif %}>
-                <span class="settings-toggle-label">{{ d.label }}</span>
-            </label>
-            {% elif d.kind == "select" %}
-            <label for="set-{{ d.key }}">{{ d.label }}</label>
-            <select id="set-{{ d.key }}" name="{{ d.key }}">
-                {% for value, label in d.choices %}
-                <option value="{{ value }}" {% if current == value %}selected{% endif %}>
-                    {{ label }}
-                </option>
-                {% endfor %}
-            </select>
-            {% elif d.kind == "segment" %}
-            <label>{{ d.label }}</label>
-            <div class="settings-segment settings-segment-page" id="set-{{ d.key }}">
-                {% for value, label in d.choices %}
-                <label class="segment-btn">
-                    <input type="radio" name="{{ d.key }}" value="{{ value }}"
-                           {% if current == value %}checked{% endif %}>
-                    <span>{{ label }}</span>
+        {% for section_title, section_defs in sections %}
+        <fieldset class="settings-section">
+            <legend>{{ section_title }}</legend>
+            {% for d in section_defs %}
+            {% set current = values.get(d.key, d.default) %}
+            <div class="form-group settings-row" data-key="{{ d.key }}"
+                 data-type="{{ d.kind }}"
+                 data-default="{{ d.default if d.default is not none else '' }}">
+                {% if d.kind == "toggle" %}
+                <label class="settings-toggle" for="set-{{ d.key }}">
+                    <input type="checkbox" id="set-{{ d.key }}" name="{{ d.key }}"
+                           {% if current %}checked{% endif %}>
+                    <span class="settings-toggle-label">{{ d.label }}</span>
                 </label>
-                {% endfor %}
+                {% elif d.kind == "select" %}
+                <label for="set-{{ d.key }}">{{ d.label }}</label>
+                <select id="set-{{ d.key }}" name="{{ d.key }}">
+                    {% for value, label in d.choices %}
+                    <option value="{{ value }}" {% if current == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+                {% elif d.kind == "segment" %}
+                <label>{{ d.label }}</label>
+                <div class="settings-segment settings-segment-page" id="set-{{ d.key }}">
+                    {% for value, label in d.choices %}
+                    <label class="segment-btn">
+                        <input type="radio" name="{{ d.key }}" value="{{ value }}"
+                               {% if current == value %}checked{% endif %}>
+                        <span>{{ label }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+                {% elif d.kind == "image_url" %}
+                <label for="set-{{ d.key }}">{{ d.label }}</label>
+                <input type="text" id="set-{{ d.key }}" name="{{ d.key }}"
+                       value="{{ current if current is not none else '' }}"
+                       placeholder="(leave empty for none)">
+                {% elif d.kind == "url" %}
+                <label for="set-{{ d.key }}">{{ d.label }}</label>
+                <input type="text" id="set-{{ d.key }}" name="{{ d.key }}"
+                       value="{{ current if current is not none else '' }}"
+                       placeholder="(leave empty for none)">
+                {% elif d.kind == "number" %}
+                <label for="set-{{ d.key }}">{{ d.label }}</label>
+                <input type="number" id="set-{{ d.key }}" name="{{ d.key }}"
+                       value="{{ current if current is not none else '' }}">
+                {% else %}
+                <label for="set-{{ d.key }}">{{ d.label }}</label>
+                <input type="text" id="set-{{ d.key }}" name="{{ d.key }}"
+                       value="{{ current if current is not none else '' }}">
+                {% endif %}
+                {% if d.help %}
+                <span class="form-hint">{{ d.help }}</span>
+                {% endif %}
+                <span class="settings-saved" aria-live="polite"></span>
             </div>
-            {% elif d.kind == "image_url" %}
-            <label for="set-{{ d.key }}">{{ d.label }}</label>
-            <input type="text" id="set-{{ d.key }}" name="{{ d.key }}"
-                   value="{{ current if current is not none else '' }}"
-                   placeholder="(leave empty for none)">
-            {% elif d.kind == "url" %}
-            <label for="set-{{ d.key }}">{{ d.label }}</label>
-            <input type="text" id="set-{{ d.key }}" name="{{ d.key }}"
-                   value="{{ current if current is not none else '' }}"
-                   placeholder="(leave empty for none)">
-            {% elif d.kind == "number" %}
-            <label for="set-{{ d.key }}">{{ d.label }}</label>
-            <input type="number" id="set-{{ d.key }}" name="{{ d.key }}"
-                   value="{{ current if current is not none else '' }}">
-            {% else %}
-            <label for="set-{{ d.key }}">{{ d.label }}</label>
-            <input type="text" id="set-{{ d.key }}" name="{{ d.key }}"
-                   value="{{ current if current is not none else '' }}">
-            {% endif %}
-            {% if d.help %}
-            <span class="form-hint">{{ d.help }}</span>
-            {% endif %}
-            <span class="settings-saved" aria-live="polite"></span>
-        </div>
+            {% endfor %}
+        </fieldset>
         {% endfor %}
     </form>
     {# Sites add non-setting page content here (e.g. an import or account section). #}

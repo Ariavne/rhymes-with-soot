@@ -123,6 +123,10 @@ class SettingDef:
     For "select" and "segment", ``choices`` is a tuple of (value, label)
     pairs. ``default`` is shown (and submitted) when the user has not set
     the setting.
+
+    ``section`` groups settings under a titled heading on the /settings
+    page: settings sharing a section title render together, in
+    registration order.
     """
 
     key: str
@@ -131,10 +135,11 @@ class SettingDef:
     default: object = None
     choices: tuple = ()
     help: str = ""
+    section: str = "General"
 
 
 def register_setting(key, label, *, kind="text", default=None, choices=(),
-                     help=""):
+                     help="", section="General"):
     """Declare a setting for the /settings page.
 
     Call at import time (the site's models module is the natural place), like
@@ -143,10 +148,12 @@ def register_setting(key, label, *, kind="text", default=None, choices=(),
 
     ``kind`` is one of "text", "number", "select", "segment", "toggle",
     "image_url", or "url" (see SettingDef for the semantics of each).
+    ``section`` groups the setting under a titled heading on the /settings
+    page (see SettingDef).
     """
     _SETTING_DEFS.append(SettingDef(
         key, label, kind=kind, default=default,
-        choices=tuple(choices), help=help,
+        choices=tuple(choices), help=help, section=section,
     ))
 
 
@@ -256,6 +263,19 @@ def delete_setting(username, key):
     return True
 
 
+def _grouped_defs(defs):
+    """Declared settings as ordered (section_title, defs) pairs, in
+    registration order."""
+    groups = {}
+    order = []
+    for d in defs:
+        if d.section not in groups:
+            groups[d.section] = []
+            order.append(d.section)
+        groups[d.section].append(d)
+    return [(title, groups[title]) for title in order]
+
+
 def _normalize_form_value(d, form):
     """Read one declared setting from a submitted form into a Python value."""
     if d.kind == "toggle":
@@ -284,10 +304,11 @@ def _read_def(d, form):
 def page():
     username = get_current_user().username
     defs = list_setting_defs()
+    sections = _grouped_defs(defs)
     values = load_settings(username)
     if request.method == "GET":
-        return render_template("settings.html", defs=defs, values=values,
-                               notice=None, error=None)
+        return render_template("settings.html", sections=sections,
+                               values=values, notice=None, error=None)
 
     error = None
     new_values = {}
@@ -298,14 +319,15 @@ def page():
             break
         new_values[d.key] = v
     if error:
-        return render_template("settings.html", defs=defs, values=values,
-                               notice=None, error=error)
+        return render_template("settings.html", sections=sections,
+                               values=values, notice=None, error=error)
     for d in defs:
         set_setting(username, d.key, new_values[d.key])
     logger.info("Settings saved user=%s keys=%s", username,
                 ",".join(d.key for d in defs))
-    return render_template("settings.html", defs=defs, values=new_values,
-                           notice="Settings saved.", error=None)
+    return render_template("settings.html", sections=sections,
+                           values=new_values, notice="Settings saved.",
+                           error=None)
 
 
 # JSON API (for sites that build custom controls)
@@ -334,6 +356,7 @@ def api_defs():
             "default": d.default,
             "choices": [list(c) for c in d.choices],
             "help": d.help,
+            "section": d.section,
         } for d in list_setting_defs()],
         "values": load_settings(username),
     })

@@ -10,7 +10,7 @@ import logging
 import re
 import secrets
 
-from flask import Blueprint, jsonify, request, render_template, abort
+from flask import Blueprint, jsonify, request, render_template, url_for, abort
 from werkzeug.security import generate_password_hash
 
 from rhymes_with_soot.admin.passwords import (
@@ -66,9 +66,12 @@ def _access_groups():
 
 def _page(error=None, notice=None):
     from rhymes_with_soot.access import list_access_defs
-    from rhymes_with_soot.admin import user_purge
+    from rhymes_with_soot.admin import list_admin_panels, user_purge
 
     users = _user_list()
+    panels = [
+        (p.label, url_for(p.endpoint)) for p in list_admin_panels()
+    ]
     # The user panel is driven by ?user= (links) or the user= form field the
     # panel's own actions carry; an unknown or missing value leaves the right
     # pane empty.
@@ -82,7 +85,7 @@ def _page(error=None, notice=None):
         else:
             selected = None
 
-    return render_template("admin.html", users=users,
+    return render_template("admin.html", users=users, panels=panels,
                            access_defs=list_access_defs(),
                            access_groups=_access_groups(),
                            access_grants=_access_grants(),
@@ -382,8 +385,8 @@ def set_access(username):
 
     current = get_current_user()
     if username == current.username:
-        # The same rule as the role endpoint: no one edits their own
-        # permission levels, whatever the new set would be.
+        # No one edits their own permission levels, whatever the new set
+        # would be.
         logger.warning(
             "Admin %s attempted to change their own access; refused",
             username,

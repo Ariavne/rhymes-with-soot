@@ -26,8 +26,5 @@ users.json
 sites/*
 !sites/README.md
 
-# Scratch & planning
-/.scratch
-
 # OS
 .DS_Store

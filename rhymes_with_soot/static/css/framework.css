@@ -122,6 +122,24 @@ textarea:focus-visible {
   margin-bottom: 8px;
   font-size: 24px;
 }
+.admin-panels {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.admin-panel-link {
+  display: inline-block;
+  padding: 5px 12px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: #2a2a4a;
+  color: #e0e0e0;
+  font-size: 13px;
+}
+.admin-panel-link:hover {
+  background: #3a3a5a;
+  text-decoration: none;
+}
 .admin-back {
   display: inline-block;
   margin-bottom: 12px;
@@ -452,10 +470,27 @@ textarea:focus-visible {
   margin-bottom: 18px;
   font-size: 24px;
 }
-.settings-form {
+.settings-section {
   background: #16213e;
+  border: 1px solid #333;
   border-radius: 8px;
-  padding: 18px;
+  padding: 16px 18px;
+}
+.settings-section + .settings-section,
+.settings-form + .settings-section {
+  margin-top: 16px;
+}
+.settings-section .settings-row:last-child {
+  margin-bottom: 0;
+}
+.settings-section legend {
+  padding: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 12px;
 }
 .settings-row {
   margin-bottom: 16px;
@@ -522,6 +557,29 @@ textarea:focus-visible {
   15% { opacity: 1; }
   70% { opacity: 1; }
   100% { opacity: 0; }
+}
+/* The form renders no box of its own, so its sections (and any extra
+   section a site adds after the form) become grid items. */
+@media (min-width: 721px) {
+  .settings-container {
+    max-width: 880px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .settings-container > p,
+  .settings-container > h1,
+  .settings-container > .login-error,
+  .settings-container > .admin-notice {
+    grid-column: 1 / -1;
+  }
+  .settings-form {
+    display: contents;
+  }
+  .settings-section + .settings-section,
+  .settings-form + .settings-section {
+    margin-top: 0;
+  }
 }
 
 /* Settings dialog — a centered, auto-saving popup listing the site's
