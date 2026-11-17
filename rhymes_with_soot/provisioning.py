@@ -142,7 +142,7 @@ def _access_problems(access, username, defs):
                 "value in the mapping form"
             )
         elif d.kind in ("select", "multi") and value:
-            if value not in {v for v, _ in d.choices}:
+            if value not in {v for v, _ in d.resolve_choices()}:
                 problems.append(
                     f"access value {value!r} for {key!r} for {username!r} "
                     "is not one of its declared choices"

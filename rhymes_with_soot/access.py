@@ -101,9 +101,10 @@ class AccessDef:
     """One access a site declares for the admin's access editor.
 
     ``kind`` is "toggle", "select", "multi", or "number". For "select" and
-    "multi", ``choices`` is a non-empty tuple of (value, label) pairs. For
-    "number", ``default`` is the non-negative number a user holding no
-    value gets.
+    "multi", ``choices`` is a non-empty tuple of (value, label) pairs, or a
+    zero-argument callable returning such a tuple (dynamic choices, see
+    :meth:`resolve_choices`). For "number", ``default`` is the non-negative
+    number a user holding no value gets.
     """
 
     key: str
@@ -112,6 +113,23 @@ class AccessDef:
     choices: tuple = ()
     default: object = None
     help: str = ""
+
+    def resolve_choices(self):
+        """The (value, label) pairs this access offers, resolved now.
+
+        A callable ``choices`` is invoked and its result returned, so a
+        dynamic source (e.g. a site's currently loaded tools) is always
+        current. A provider that raises yields an empty tuple, so a broken
+        dynamic source cannot take the admin page down. A plain tuple is
+        returned as-is."""
+        if callable(self.choices):
+            try:
+                return tuple(self.choices())
+            except Exception:
+                logger.exception("Dynamic choices for access %r failed",
+                                 self.key)
+                return ()
+        return self.choices
 
 
 _ACCESS_DEFS = []
@@ -128,13 +146,17 @@ def register_access(key, label, *, kind="toggle", choices=(), default=None,
 
     ``kind`` is "toggle" (default), "select", "multi", or "number". For
     "select" and "multi", ``choices`` is a non-empty sequence of (value,
-    label) pairs. For "number", ``default`` is a non-negative number.
+    label) pairs, or a zero-argument callable returning such a sequence
+    (dynamic choices, resolved at use time via ``AccessDef.resolve_choices``
+    so a live source — e.g. a site's currently loaded tools — stays current).
+    For "number", ``default`` is a non-negative number.
     """
     if kind not in KINDS:
         raise ValueError(f"access kind must be one of {KINDS}, got {kind!r}")
-    choices = tuple(choices)
-    if kind in ("select", "multi") and not choices:
-        raise ValueError(f"a {kind} access for {key!r} needs choices")
+    if not callable(choices):
+        choices = tuple(choices)
+        if kind in ("select", "multi") and not choices:
+            raise ValueError(f"a {kind} access for {key!r} needs choices")
     if kind == "number" and (
             default is None or isinstance(default, bool) or default < 0):
         raise ValueError(
@@ -180,7 +202,7 @@ def _full_grants():
         if d.kind == "toggle":
             grants[d.key] = {TOGGLE_VALUE}
         elif d.kind in ("select", "multi"):
-            grants[d.key] = {v for v, _ in d.choices}
+            grants[d.key] = {v for v, _ in d.resolve_choices()}
         elif d.kind == "number":
             grants[d.key] = {str(d.default)}
     return grants

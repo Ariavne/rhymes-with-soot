@@ -177,7 +177,7 @@ def _validate_desired(body):
                     return None
                 values = {num}
         else:
-            legal = {v for v, _ in d.choices}
+            legal = {v for v, _ in d.resolve_choices()}
             if not isinstance(val, list):
                 return None
             values = set()
